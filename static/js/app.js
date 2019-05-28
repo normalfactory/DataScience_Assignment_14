@@ -12,6 +12,42 @@ console.log("--> app.js");
 // operational layers
 
 
+//-- Globals
+const LEGENDINFO = [
+    {
+        color: "#23A606",
+        radius: 8,
+        legend: "0-1"
+    },
+    {
+        color: "#9FB004",
+        radius: 12,
+        legend: "1-2"
+    },
+    {
+        color: "#B49B03",
+        radius: 18,
+        legend: "2-3"
+    },
+    {
+        color: "#B77202",
+        radius: 26,
+        legend: "3-4"
+    },
+    {
+        color: "#BB4701",
+        radius: 36,
+        legend: "4-5"
+    },
+    {
+        color: "#BF1900",
+        radius: 56,
+        legend: "5+"
+    },
+];
+
+
+
 
 function createBasemaps(){
     /*
@@ -59,27 +95,7 @@ function createBasemaps(){
 }
 
 
-//outdoors
-//pencil, comic, dark
 
-
-
-//--------- TESTING
-
-// let basemaps = createBasemaps();
-
-// let overlays = {};
-
-// let sourceMap = L.map("map", {
-//     center: [37.29809, -97.387701],
-//     zoom: 4,
-//     layers: [ basemaps.Outdoors]
-   
-//     });
-
-
-// //- Table of Contents
-// L.control.layers(basemaps, overlays).addTo(sourceMap);
 
 
 function createStyleForPlate(){
@@ -110,40 +126,33 @@ function createMarkerForEarthquake(sourceFeature, latlng){
     */
 
 
-    // console.log(sourceFeature.properties.mag);
-
-    // console.log(latlng);
-
-
     //- Create Default SymbolInfo
-    symbolInfo = {
-        "color": "#BF1900",
-        "radius": 56
-    };
+    let symbolInfo = null;
 
 
+    //- Determine Symbol based on Magnitude
     if (sourceFeature.properties.mag <= 1.0){
-        symbolInfo.color = "#23A606";
-        symbolInfo.radius = 8;
+        symbolInfo = LEGENDINFO[0];
     }
     else if (sourceFeature.properties.mag <= 2.0){
-        symbolInfo.color = "#9FB004";
-        symbolInfo.radius = 12;
+        symbolInfo = LEGENDINFO[1];
     }
     else if (sourceFeature.properties.mag <= 3.0){
-        symbolInfo.color = "#B49B03";
-        symbolInfo.radius = 18;
+        symbolInfo = LEGENDINFO[2];
     }
     else if (sourceFeature.properties.mag <= 4.0){
-        symbolInfo.color = "#B77202";
-        symbolInfo.radius = 26;
+        symbolInfo = LEGENDINFO[3];
     }
     else if (sourceFeature.properties.mag <= 5.0){
-        symbolInfo.color = "#BB4701";
-        symbolInfo.radius = 36;
+        symbolInfo = LEGENDINFO[4];
+    }
+    else
+    {
+        symbolInfo = LEGENDINFO[5];
     }
 
 
+    //- Create Circle Symbol
     return L.circleMarker(latlng,
         {
             fillColor: symbolInfo.color,
@@ -154,9 +163,38 @@ function createMarkerForEarthquake(sourceFeature, latlng){
     );
 }
 
-//https://cartographicperspectives.org/index.php/journal/article/view/cp76-donohue-et-al/1307
-//circle marker
-//pointToLayer
+
+function createLegend(sourceMap){
+    /* Creates control that hosts the static legend information
+
+    Accepts: sourceMap (map control) reference to the map control
+
+    Returns : undefined
+    */
+
+    //- Create Legend Control
+    let legendControl = L.control({
+            position: "bottomright"
+        });
+
+    
+    //- Create Content
+    legendControl.onAdd = function(mapControl) {
+
+        let legendDiv = L.DomUtil.create("div", "info legend");
+
+        for (let counter = 0; counter < LEGENDINFO.length; counter++){
+            legendDiv.innerHTML += '<i style="background:' + LEGENDINFO[counter].color + 
+                '"></i>' + LEGENDINFO[counter].legend + '<br>';
+        }
+
+        return legendDiv;
+    };
+
+
+    //- Add Control to map
+    legendControl.addTo(sourceMap);
+}
 
 
 d3.json("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson").then(sourceEarthquakes => {
@@ -164,18 +202,15 @@ d3.json("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geoj
     d3.json("static/data/PB2002_plates.json").then(sourcePlates => {
         console.log("got the plates");
 
-        console.log(sourcePlates);
-        console.log(sourceEarthquakes);
-
 
         let basemaps = createBasemaps();
 
         
 
         let sourceMap = L.map("map", {
-            center: [37.29809, -97.387701],
-            zoom: 9,
-            layers: [ basemaps.Outdoors]
+            center: [37.29809, -119.064497],
+            zoom: 6,
+            layers: [ basemaps.Light]
         
             });
 
@@ -189,16 +224,50 @@ d3.json("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geoj
         let earthquakeOverlayLayer = L.geoJSON(sourceEarthquakes,
             {pointToLayer: createMarkerForEarthquake}).addTo(sourceMap);
         
+
         let overlays = {
             "Plates":  platesOverlayLayer,
             "Earthquakes": earthquakeOverlayLayer
         };
 
         
-
-
         //- Table of Contents
-        L.control.layers(basemaps, overlays).addTo(sourceMap);
+        L.control.layers(basemaps, overlays, {
+                position: "topright",
+                collapsed: false
+            }).addTo(sourceMap);
 
+
+     
+
+
+            createLegend(sourceMap);
+
+
+// // Create a legend to display information about our map
+// var info = L.control({
+//     position: "bottomright"
+//   });
+  
+//   // When the layer control is added, insert a div with the class of "legend"
+//   info.onAdd = function() {
+//     var div = L.DomUtil.create("div", "legend");
+//     return div;
+//   };
+//   // Add the info legend to the map
+//   info.addTo(map);
+  
+
+// // Update the legend's innerHTML with the last updated time and station count
+// function updateLegend(time, stationCount) {
+//     document.querySelector(".legend").innerHTML = [
+//       "<p>Updated: " + moment.unix(time).format("h:mm:ss A") + "</p>",
+//       "<p class='out-of-order'>Out of Order Stations: " + stationCount.OUT_OF_ORDER + "</p>",
+//       "<p class='coming-soon'>Stations Coming Soon: " + stationCount.COMING_SOON + "</p>",
+//       "<p class='empty'>Empty Stations: " + stationCount.EMPTY + "</p>",
+//       "<p class='low'>Low Stations: " + stationCount.LOW + "</p>",
+//       "<p class='healthy'>Healthy Stations: " + stationCount.NORMAL + "</p>"
+//     ].join("");
+  
     });    
 });
