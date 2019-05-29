@@ -95,9 +95,6 @@ function createBasemaps(){
 }
 
 
-
-
-
 function createStyleForPlate(){
     /* Creates the style used for the plates; properties: https://leafletjs.com/reference-1.5.0.html#path-stroke
 
@@ -113,6 +110,19 @@ function createStyleForPlate(){
         opacity: 1.0,
         fill: false
     };
+}
+
+function createPopupForEarthquake(sourceFeature, sourceLayer){
+    /* Creates the HTML for the popup for the earthquake layer
+
+    Accepts : sourceFeature (geoJson feature) feature to apply popup
+              sourceLayer (layer) reference to the layer
+    
+    Returns : undefined
+    */
+
+    sourceLayer.bindPopup('<h6><a href="' + sourceFeature.properties.url + '" target="_blank">' + 
+        sourceFeature.properties.place + "</a></h6>Magnitude: " + sourceFeature.properties.mag );
 }
 
 function createMarkerForEarthquake(sourceFeature, latlng){
@@ -203,16 +213,19 @@ d3.json("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geoj
         console.log("got the plates");
 
 
+        console.log(sourceEarthquakes);
+
         let basemaps = createBasemaps();
 
-        
-
+        //- Create Map Control
         let sourceMap = L.map("map", {
             center: [37.29809, -119.064497],
             zoom: 6,
             layers: [ basemaps.Light]
         
             });
+
+        
 
 
         //- Plates
@@ -222,8 +235,12 @@ d3.json("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geoj
 
         //- Earthquake
         let earthquakeOverlayLayer = L.geoJSON(sourceEarthquakes,
-            {pointToLayer: createMarkerForEarthquake}).addTo(sourceMap);
+            {pointToLayer: createMarkerForEarthquake,
+            onEachFeature: createPopupForEarthquake}).addTo(sourceMap);
         
+
+        // earthquakeOverlayLayer.bindPopup("<h3>" + feature."</h3>");
+
 
         let overlays = {
             "Plates":  platesOverlayLayer,
@@ -241,33 +258,8 @@ d3.json("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geoj
      
 
 
-            createLegend(sourceMap);
+        createLegend(sourceMap);
 
-
-// // Create a legend to display information about our map
-// var info = L.control({
-//     position: "bottomright"
-//   });
-  
-//   // When the layer control is added, insert a div with the class of "legend"
-//   info.onAdd = function() {
-//     var div = L.DomUtil.create("div", "legend");
-//     return div;
-//   };
-//   // Add the info legend to the map
-//   info.addTo(map);
-  
-
-// // Update the legend's innerHTML with the last updated time and station count
-// function updateLegend(time, stationCount) {
-//     document.querySelector(".legend").innerHTML = [
-//       "<p>Updated: " + moment.unix(time).format("h:mm:ss A") + "</p>",
-//       "<p class='out-of-order'>Out of Order Stations: " + stationCount.OUT_OF_ORDER + "</p>",
-//       "<p class='coming-soon'>Stations Coming Soon: " + stationCount.COMING_SOON + "</p>",
-//       "<p class='empty'>Empty Stations: " + stationCount.EMPTY + "</p>",
-//       "<p class='low'>Low Stations: " + stationCount.LOW + "</p>",
-//       "<p class='healthy'>Healthy Stations: " + stationCount.NORMAL + "</p>"
-//     ].join("");
   
     });    
 });
