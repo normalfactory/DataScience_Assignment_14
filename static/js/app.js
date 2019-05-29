@@ -7,10 +7,6 @@ May 28, 2019
 console.log("--> app.js");
 
 
-// basemaps
-
-// operational layers
-
 
 //-- Globals
 const LEGENDINFO = [
@@ -47,10 +43,8 @@ const LEGENDINFO = [
 ];
 
 
-
-
 function createBasemaps(){
-    /*
+    /* Creates the basemap layers for use with the map
 
     Accepts : nothing
 
@@ -112,6 +106,7 @@ function createStyleForPlate(){
     };
 }
 
+
 function createPopupForEarthquake(sourceFeature, sourceLayer){
     /* Creates the HTML for the popup for the earthquake layer
 
@@ -124,6 +119,7 @@ function createPopupForEarthquake(sourceFeature, sourceLayer){
     sourceLayer.bindPopup('<h6><a href="' + sourceFeature.properties.url + '" target="_blank">' + 
         sourceFeature.properties.place + "</a></h6>Magnitude: " + sourceFeature.properties.mag );
 }
+
 
 function createMarkerForEarthquake(sourceFeature, latlng){
     /* For each of the earthquakes features found in the geoJson, returns the marker symbol that is to be used
@@ -207,14 +203,15 @@ function createLegend(sourceMap){
 }
 
 
+//- Get Data
 d3.json("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson").then(sourceEarthquakes => {
 
     d3.json("static/data/PB2002_plates.json").then(sourcePlates => {
-        console.log("got the plates");
+        
+        console.log("-> Received data");
 
 
-        console.log(sourceEarthquakes);
-
+        //- Create Basemaps
         let basemaps = createBasemaps();
 
         //- Create Map Control
@@ -222,26 +219,19 @@ d3.json("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geoj
             center: [37.29809, -119.064497],
             zoom: 6,
             layers: [ basemaps.Light]
-        
             });
 
-        
 
-
-        //- Plates
+        //- Overlay Layer: Plates
         let platesOverlayLayer = L.geoJSON(sourcePlates, 
             {style: createStyleForPlate}).addTo(sourceMap);
 
 
-        //- Earthquake
+        //- Overlay Layer: Earthquake
         let earthquakeOverlayLayer = L.geoJSON(sourceEarthquakes,
             {pointToLayer: createMarkerForEarthquake,
             onEachFeature: createPopupForEarthquake}).addTo(sourceMap);
         
-
-        // earthquakeOverlayLayer.bindPopup("<h3>" + feature."</h3>");
-
-
         let overlays = {
             "Plates":  platesOverlayLayer,
             "Earthquakes": earthquakeOverlayLayer
@@ -255,11 +245,7 @@ d3.json("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geoj
             }).addTo(sourceMap);
 
 
-     
-
-
+        //- Create Legend
         createLegend(sourceMap);
-
-  
     });    
 });
