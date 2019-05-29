@@ -233,7 +233,7 @@ d3.json("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geoj
             onEachFeature: createPopupForEarthquake}).addTo(sourceMap);
         
         let overlays = {
-            "Plates":  platesOverlayLayer,
+            "Tectonic Plates":  platesOverlayLayer,
             "Earthquakes": earthquakeOverlayLayer
         };
 
